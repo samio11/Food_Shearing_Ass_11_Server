@@ -56,6 +56,9 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
     // Send a ping to confirm a successful connection
+
+    const food_data = client.db('ShareByte').collection('food_info')
+
     app.post('/jwt',async(req,res)=>{
       const user = req.body;
       const token = jwt.sign(user,process.env.Access_Token,{expiresIn: '7d'})
@@ -76,6 +79,18 @@ async function run() {
         maxAge: 0
       })
       .send({success: true, message: 'Cookie Clear Done'})
+    })
+
+    app.get('/feature_food',async(req,res)=>{
+      const result = await food_data.find().toArray();
+      res.send(result)
+    })
+
+    app.post('/add_food',async(req,res)=>{
+     const data = req.body;
+     console.log(data)
+      const result = await food_data.insertOne(data);
+      res.send(result)
     })
 
 
