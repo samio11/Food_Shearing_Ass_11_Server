@@ -57,6 +57,7 @@ async function run() {
     // Send a ping to confirm a successful connection
 
     const food_data = client.db('ShareByte').collection('food_info')
+    const Request_food = client.db('ShareByte').collection('food_request')
 
     app.post('/jwt', async (req, res) => {
       const user = req.body;
@@ -121,6 +122,33 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const result = await food_data.findOne(query);
+      res.send(result)
+    })
+    app.get('/food_info/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await food_data.findOne(query);
+      res.send(result)
+    })
+// food Request with new database and delete in food_info db
+    app.post('/food_request', async (req, res) => {
+      const data = req.body;
+      const result = await Request_food.insertOne(data);
+      res.send(result)
+    })
+    app.delete('/food_info/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await food_data.deleteOne(query);
+      res.send(result)
+    })
+
+    app.get('/my_requested_food',verifyToken,async(req,res)=>{
+      const tokenEmail = req.user.email;
+      // console.log(tokenEmail)
+      if (!tokenEmail) return res.status(403).send({ message: 'Forbidden User' });
+      const query = { req_email: tokenEmail };
+      const result = await Request_food.find(query).toArray();
       res.send(result)
     })
 
