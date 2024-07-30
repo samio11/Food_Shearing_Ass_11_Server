@@ -152,6 +152,33 @@ async function run() {
       res.send(result)
     })
 
+    // For Avilable Food Section 
+    app.get('/available_food', async (req, res) => {
+      const result = await food_data.find({ Status : 'available' }).toArray();
+      res.send(result)
+    })
+
+    app.get('/filtered_food',async(req,res)=>{
+        const size = parseInt(req.query.size);
+        const page = parseInt(req.query.page)-1;
+        const sort = req.query.sort;
+        const search = req.query.search;
+        let query = {
+          Food_Name : {$regex : search , $options : 'i'}
+        }
+        let options = {}
+        if(sort)
+        {
+          options = {sort: {Expired_Date_Time : sort === 'asc'? 1:-1}}
+        }
+        const result = await food_data
+        .find(query,options)
+        .skip(page*size)
+        .limit(size)
+        .toArray();
+        res.send(result)
+    })
+
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
