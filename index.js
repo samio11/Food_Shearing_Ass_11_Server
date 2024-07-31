@@ -5,10 +5,10 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
-const port = process.env.PORT || 5000;
+
 
 const corsConfig = {
-  origin: ['http://localhost:5173', 'http://localhost:5173'],
+  origin: ['https://ass-11-food-shearing.web.app'],
   credentials: true,
   optionSuccessStatus: 200,
 }
@@ -17,6 +17,7 @@ app.use(cors(corsConfig));
 app.use(express.json());
 app.use(cookieParser());
 
+const port = process.env.PORT || 5000;
 
 const verifyToken = (req, res, next) => {
   const token = req?.cookies?.token;
@@ -74,7 +75,7 @@ async function run() {
     app.get('/logout', async (req, res) => {
       res.clearCookie('token', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production' ? true : false,
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
         maxAge: 0
       })
@@ -91,8 +92,8 @@ async function run() {
       const result = await food_data.insertOne(data);
       res.send(result)
     })
-
-    app.get('/manage_food/:email', verifyToken, async (req, res) => {
+    //  i may add (verifyToken)
+    app.get('/manage_food/:email',verifyToken, async (req, res) => {
       const email = req.params.email;
       const tokenEmail = req.user.email;
       if (email !== tokenEmail) return res.status(403).send({ message: 'Unauthorized User' });
@@ -101,49 +102,49 @@ async function run() {
       res.send(result)
     })
 
-    app.delete('/my_food/:id',async(req,res)=>{
+    app.delete('/my_food/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const result = await food_data.deleteOne(query);
       res.send(result)
     })
 
-    app.put('/my_food/:id',async(req,res)=>{
+    app.put('/my_food/:id', async (req, res) => {
       const id = req.params.id;
       const data = req.body;
       const query = { _id: new ObjectId(id) }
-      const options = {upsert: true }
-      const update = { $set: {...data} }
-      const result = await food_data.updateOne(query, update,options);
+      const options = { upsert: true }
+      const update = { $set: { ...data } }
+      const result = await food_data.updateOne(query, update, options);
       res.send(result)
     })
 
-    app.get('/my_food_data/:id',async(req,res)=>{
+    app.get('/my_food_data/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const result = await food_data.findOne(query);
       res.send(result)
     })
-    app.get('/food_info/:id',async(req,res)=>{
+    app.get('/food_info/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const result = await food_data.findOne(query);
       res.send(result)
     })
-// food Request with new database and delete in food_info db
+    // food Request with new database and delete in food_info db
     app.post('/food_request', async (req, res) => {
       const data = req.body;
       const result = await Request_food.insertOne(data);
       res.send(result)
     })
-    app.delete('/food_info/:id',async(req,res)=>{
+    app.delete('/food_info/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const result = await food_data.deleteOne(query);
       res.send(result)
     })
-
-    app.get('/my_requested_food',verifyToken,async(req,res)=>{
+    //  i may add (verifyToken)
+    app.get('/my_requested_food',verifyToken, async (req, res) => {
       const tokenEmail = req.user.email;
       // console.log(tokenEmail)
       if (!tokenEmail) return res.status(403).send({ message: 'Forbidden User' });
@@ -154,34 +155,33 @@ async function run() {
 
     // For Avilable Food Section 
     app.get('/available_food', async (req, res) => {
-      const result = await food_data.find({ Status : 'available' }).toArray();
+      const result = await food_data.find({ Status: 'available' }).toArray();
       res.send(result)
     })
 
-    app.get('/filtered_food',async(req,res)=>{
-        const size = parseInt(req.query.size);
-        const page = parseInt(req.query.page)-1;
-        const sort = req.query.sort;
-        const search = req.query.search;
-        let query = {
-          Food_Name : {$regex : search , $options : 'i'}
-        }
-        let options = {}
-        if(sort)
-        {
-          options = {sort: {Expired_Date_Time : sort === 'asc'? 1:-1}}
-        }
-        const result = await food_data
-        .find(query,options)
-        .skip(page*size)
+    app.get('/filtered_food', async (req, res) => {
+      const size = parseInt(req.query.size);
+      const page = parseInt(req.query.page) - 1;
+      const sort = req.query.sort;
+      const search = req.query.search;
+      let query = {
+        Food_Name: { $regex: search, $options: 'i' }
+      }
+      let options = {}
+      if (sort) {
+        options = { sort: { Expired_Date_Time: sort === 'asc' ? 1 : -1 } }
+      }
+      const result = await food_data
+        .find(query, options)
+        .skip(page * size)
         .limit(size)
         .toArray();
-        res.send(result)
+      res.send(result)
     })
 
 
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
