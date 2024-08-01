@@ -8,7 +8,7 @@ const app = express();
 
 
 const corsConfig = {
-  origin: ['https://ass-11-food-shearing.web.app'],
+  origin: ['https://ass-11-food-shearing.web.app', 'http://localhost:5173', 'http://localhost:5174'],
   credentials: true,
   optionSuccessStatus: 200,
 }
@@ -66,8 +66,8 @@ async function run() {
       res
         .cookie('token', token, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
+          secure: process.env.NODE_ENV === 'production', // Ensure the cookie is only sent over HTTPS
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict', // Allow cross-site cookie
         })
         .send({ success: true, message: 'JWT token sent successfully' })
     })
@@ -75,8 +75,8 @@ async function run() {
     app.get('/logout', async (req, res) => {
       res.clearCookie('token', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production' ? true : false,
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+        secure: process.env.NODE_ENV === 'production', // Ensure the cookie is only sent over HTTPS
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict', // Allow cross-site cookie
         maxAge: 0
       })
         .send({ success: true, message: 'Cookie Clear Done' })
@@ -93,7 +93,7 @@ async function run() {
       res.send(result)
     })
     //  i may add (verifyToken)
-    app.get('/manage_food/:email',verifyToken, async (req, res) => {
+    app.get('/manage_food/:email', verifyToken, async (req, res) => {
       const email = req.params.email;
       const tokenEmail = req.user.email;
       if (email !== tokenEmail) return res.status(403).send({ message: 'Unauthorized User' });
@@ -144,7 +144,7 @@ async function run() {
       res.send(result)
     })
     //  i may add (verifyToken)
-    app.get('/my_requested_food',verifyToken, async (req, res) => {
+    app.get('/my_requested_food', verifyToken, async (req, res) => {
       const tokenEmail = req.user.email;
       // console.log(tokenEmail)
       if (!tokenEmail) return res.status(403).send({ message: 'Forbidden User' });
